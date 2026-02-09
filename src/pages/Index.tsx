@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, Clock, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
+import { SearchHero } from '@/components/SearchHero';
 import { AgencyCard } from '@/components/AgencyCard';
 import { mockAgencies } from '@/data/mockData';
-import heroBg from '@/assets/hero-bg.jpg';
 
 const features = [
   {
@@ -29,43 +29,7 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={heroBg}
-            alt="Luxury cars"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/80 to-primary/60" />
-        </div>
-
-        <div className="container relative py-24 md:py-32">
-          <div className="max-w-2xl animate-fade-in">
-            <h1 className="font-display text-4xl font-bold tracking-tight text-primary-foreground md:text-5xl lg:text-6xl">
-              Plan Your Perfect
-              <span className="block text-accent">Car Rental</span>
-            </h1>
-            <p className="mt-6 text-lg text-primary-foreground/80 md:text-xl">
-              Compare and book from multiple trusted car rental agencies in one place. 
-              Find the perfect vehicle for your journey.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link to="/agencies">
-                <Button variant="hero" size="xl">
-                  Browse All Agencies
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/admin">
-                <Button variant="heroOutline" size="xl">
-                  Admin Dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <SearchHero />
 
       {/* Features Section */}
       <section className="py-16 md:py-24">

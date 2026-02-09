@@ -28,7 +28,7 @@ export function Header() {
           <img 
             src={logo} 
             alt="Car Rental Planner" 
-            className="h-16 w-auto transition-transform group-hover:scale-105"
+            className="h-16 w-auto transition-transform group-hover:scale-105 opacity-85 dark:opacity-90"
           />
         </Link>
 
