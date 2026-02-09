@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MapPin, Users, Zap } from 'lucide-react';
+import { Search, MapPin, Users, Zap, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { mockCars, mockBookings, mockAgencies } from '@/data/mockData';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -28,14 +34,49 @@ interface FilteredCar {
 }
 
 export function SearchHero() {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [carType, setCarType] = useState('all');
   const [location, setLocation] = useState('all');
   const [passengers, setPassengers] = useState('all');
   const [searchResults, setSearchResults] = useState<FilteredCar[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [filterActive, setFilterActive] = useState(false);
+
+  // Get all booked dates from bookings
+  const getBookedDates = (): Date[] => {
+    const bookedDates: Date[] = [];
+    mockBookings.forEach((booking) => {
+      if (booking.status === 'cancelled') return;
+      const start = new Date(booking.startDate);
+      const end = new Date(booking.endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        bookedDates.push(new Date(d));
+      }
+    });
+    return bookedDates;
+  };
+
+  const bookedDates = getBookedDates();
+
+  // Check if a date is booked
+  const isDateBooked = (date: Date): boolean => {
+    return bookedDates.some(
+      (bookedDate) =>
+        bookedDate.toDateString() === date.toDateString()
+    );
+  };
+
+  // Format date for display
+  const formatDate = (date: Date | undefined): string => {
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   const isCarAvailable = (carId: string, start: Date, end: Date): boolean => {
     return !mockBookings.some((booking) => {
@@ -86,10 +127,7 @@ export function SearchHero() {
       return;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    if (start >= end) {
+    if (startDate >= endDate) {
       alert('End date must be after start date');
       return;
     }
@@ -98,7 +136,7 @@ export function SearchHero() {
       .filter((car) => {
         if (carType !== 'all' && car.type !== carType) return false;
         if (passengers !== 'all' && car.seats < parseInt(passengers)) return false;
-        return isCarAvailable(car.id, start, end);
+        return isCarAvailable(car.id, startDate, endDate);
       })
       .map((car) => {
         const agency = mockAgencies.find((a) => a.id === car.agencyId);
@@ -122,11 +160,9 @@ export function SearchHero() {
     setFilterActive(false);
   };
 
-  const calculateDays = (start: string, end: string): number => {
+  const calculateDays = (start: Date | undefined, end: Date | undefined): number => {
     if (!start || !end) return 0;
-    const s = new Date(start);
-    const e = new Date(end);
-    return Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   const days = calculateDays(startDate, endDate);
@@ -168,30 +204,64 @@ export function SearchHero() {
 
                 {/* Dates Row - Premium styling */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Pick-up Date */}
+                  {/* Pick-up Date Calendar */}
                   <div className="group flex flex-col space-y-2">
                     <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
                       📅 Pick-up Date
                     </label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="h-11 border-2 border-muted bg-white hover:border-accent/50 focus:border-accent transition-colors text-foreground"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="h-11 w-full border-2 border-muted hover:border-accent/50 focus:border-accent justify-start text-left font-normal bg-white"
+                        >
+                          {startDate ? formatDate(startDate) : 'Select date'}
+                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          disabled={(date) =>
+                            date < new Date() || isDateBooked(date)
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
-                  {/* Drop-off Date */}
+                  {/* Drop-off Date Calendar */}
                   <div className="group flex flex-col space-y-2">
                     <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
                       📅 Drop-off Date
                     </label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="h-11 border-2 border-muted bg-white hover:border-accent/50 focus:border-accent transition-colors text-foreground"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="h-11 w-full border-2 border-muted hover:border-accent/50 focus:border-accent justify-start text-left font-normal bg-white"
+                        >
+                          {endDate ? formatDate(endDate) : 'Select date'}
+                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          disabled={(date) =>
+                            date < new Date() || 
+                            (startDate && date <= startDate) ||
+                            isDateBooked(date)
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Search Button - Spans on smaller screens */}
@@ -432,8 +502,8 @@ export function SearchHero() {
                   className="mt-6"
                   onClick={() => {
                     setHasSearched(false);
-                    setStartDate('');
-                    setEndDate('');
+                    setStartDate(undefined);
+                    setEndDate(undefined);
                   }}
                 >
                   New Search
