@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import heroImage from '@/assets/obi-aZKJEvydrNM-unsplash.jpg';
+import rentplanLogo from '@/assets/rentplan.png';
 import {
   Select,
   SelectContent,
@@ -18,7 +20,6 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { mockCars, mockBookings, mockAgencies } from '@/data/mockData';
-import heroBg from '@/assets/hero-bg.jpg';
 
 interface FilteredCar {
   id: string;
@@ -37,8 +38,10 @@ export function SearchHero() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [carType, setCarType] = useState('all');
+  const [carBrand, setCarBrand] = useState('all');
   const [location, setLocation] = useState('all');
   const [passengers, setPassengers] = useState('all');
+  const [carName, setCarName] = useState('');
   const [searchResults, setSearchResults] = useState<FilteredCar[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [filterActive, setFilterActive] = useState(false);
@@ -93,15 +96,25 @@ export function SearchHero() {
   const handleSearch = () => {
     // Allow search with just filters if dates aren't selected
     if (!startDate || !endDate) {
-      // Only filter by location/type/passengers if at least one filter is active
-      if (location === 'all' && carType === 'all' && passengers === 'all') {
-        alert('Please select at least dates or apply filters');
+      // Allow if car name is entered or other filters are active
+      if (location === 'all' && carType === 'all' && passengers === 'all' && carName === '') {
+        alert('Please select at least dates, enter a car name, or apply filters');
         return;
       }
-      // Allow location-only search
+      // Allow location-only or car-name search
       const filtered = mockCars
         .filter((car) => {
+          // Filter by car name if entered
+          if (carName) {
+            const searchLower = carName.toLowerCase();
+            const matchesName = car.name.toLowerCase().includes(searchLower) || 
+                              car.brand?.toLowerCase().includes(searchLower) ||
+                              car.type?.toLowerCase().includes(searchLower);
+            if (!matchesName) return false;
+          }
+          
           if (carType !== 'all' && car.type !== carType) return false;
+          if (carBrand !== 'all' && car.brand !== carBrand) return false;
           if (passengers !== 'all' && car.seats < parseInt(passengers)) return false;
           return car.available; // Show available cars by default
         })
@@ -134,7 +147,17 @@ export function SearchHero() {
 
     const filtered = mockCars
       .filter((car) => {
+        // Filter by car name if entered
+        if (carName) {
+          const searchLower = carName.toLowerCase();
+          const matchesName = car.name.toLowerCase().includes(searchLower) || 
+                            car.brand?.toLowerCase().includes(searchLower) ||
+                            car.type?.toLowerCase().includes(searchLower);
+          if (!matchesName) return false;
+        }
+        
         if (carType !== 'all' && car.type !== carType) return false;
+        if (carBrand !== 'all' && car.brand !== carBrand) return false;
         if (passengers !== 'all' && car.seats < parseInt(passengers)) return false;
         return isCarAvailable(car.id, startDate, endDate);
       })
@@ -169,191 +192,108 @@ export function SearchHero() {
 
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroBg})` }}>
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/75 via-primary/60 to-primary/50"></div>
+      {/* Hero Section - Modern Design with Cars Background Image */}
+      <section className="relative overflow-hidden -mt-20 pt-20 min-h-[650px] flex items-center" style={{ backgroundImage: `linear-gradient(135deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.45) 100%), url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}>
+        {/* Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/20 to-slate-900"></div>
 
-        <div className="container relative py-20 md:py-28 z-10">
-          {/* Hero Content */}
-          <div className="mx-auto max-w-4xl text-center mb-16 animate-fade-in">
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-primary-foreground mb-6 leading-tight">
-              Discover & Book
-              <span className="block text-transparent bg-gradient-to-r from-accent via-accent to-yellow-400 bg-clip-text">
-                Premium Cars
-              </span>
+        {/* Logo Accent - Left side */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 opacity-25 pointer-events-none hidden lg:block">
+          <img src={rentplanLogo} alt="RentPlan" className="h-64 w-auto drop-shadow-lg" />
+        </div>
+
+        {/* Logo Accent - Right side */}
+        <div className="absolute right-0 top-1/4 opacity-20 pointer-events-none hidden lg:block">
+          <img src={rentplanLogo} alt="RentPlan" className="h-48 w-auto drop-shadow-lg" />
+        </div>
+
+        <div className="container relative z-10 w-full">
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Hero Heading */}
+            <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
+              Premium Car
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Rentals Made Simple</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-primary-foreground/85 max-w-2xl mx-auto leading-relaxed">
-              Compare prices across multiple trusted rental agencies and find the perfect vehicle for your journey at the best price.
+            {/* Hero Subtitle */}
+            <p className="text-base md:text-lg text-white/90 mb-12 leading-relaxed drop-shadow-md font-light">
+              Discover an elegant selection of premium vehicles from trusted partners. Book instantly, drive confidently.
             </p>
-          </div>
 
-          {/* Advanced Search Section */}
-          <div className="mx-auto max-w-5xl">
-            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl overflow-hidden">
-              <div className="space-y-6 p-6 md:p-8">
-                
-                {/* Header with icons */}
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    <Search className="h-5 w-5 text-accent" />
-                    Search Available Cars
-                  </h3>
-                </div>
-
-                {/* Dates Row - Premium styling */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Pick-up Date Calendar */}
-                  <div className="group flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
-                      📅 Pick-up Date
-                    </label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-11 w-full border-2 border-muted hover:border-accent/50 focus:border-accent justify-start text-left font-normal bg-white"
-                        >
-                          {startDate ? formatDate(startDate) : 'Select date'}
-                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                          disabled={(date) =>
-                            date < new Date() || isDateBooked(date)
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Drop-off Date Calendar */}
-                  <div className="group flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
-                      📅 Drop-off Date
-                    </label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="h-11 w-full border-2 border-muted hover:border-accent/50 focus:border-accent justify-start text-left font-normal bg-white"
-                        >
-                          {endDate ? formatDate(endDate) : 'Select date'}
-                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                          disabled={(date) =>
-                            date < new Date() || 
-                            (startDate && date <= startDate) ||
-                            isDateBooked(date)
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Search Button - Spans on smaller screens */}
-                  <div className="flex flex-col justify-end">
-                    <Button
-                      size="lg"
-                      className="h-11 w-full bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
-                      onClick={handleSearch}
-                    >
-                      <Search className="mr-2 h-5 w-5" />
-                      Search Now
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-muted"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-2 text-muted-foreground">Or filter by preferences</span>
-                  </div>
-                </div>
-
-                {/* Filters Row */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Car Type Filter */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
-                      🚙 Car Type
-                    </label>
-                    <Select value={carType} onValueChange={setCarType}>
-                      <SelectTrigger className="h-11 border-2 border-muted bg-white hover:border-accent/50 focus:border-accent transition-colors">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="Sedan">Sedan</SelectItem>
-                        <SelectItem value="SUV">SUV</SelectItem>
-                        <SelectItem value="Sports Car">Sports Car</SelectItem>
-                        <SelectItem value="Convertible">Convertible</SelectItem>
-                        <SelectItem value="Luxury Sedan">Luxury Sedan</SelectItem>
-                        <SelectItem value="Electric Sedan">Electric Sedan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Passengers Filter */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
-                      👥 Passengers
-                    </label>
-                    <Select value={passengers} onValueChange={setPassengers}>
-                      <SelectTrigger className="h-11 border-2 border-muted bg-white hover:border-accent/50 focus:border-accent transition-colors">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any</SelectItem>
-                        <SelectItem value="2">2+ Seats</SelectItem>
-                        <SelectItem value="4">4+ Seats</SelectItem>
-                        <SelectItem value="5">5+ Seats</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Location Filter */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-semibold text-foreground/70 flex items-center gap-2">
-                      📍 Location
-                    </label>
-                    <Select value={location} onValueChange={setLocation}>
-                      <SelectTrigger className="h-11 border-2 border-muted bg-white hover:border-accent/50 focus:border-accent transition-colors">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Locations</SelectItem>
-                        <SelectItem value="Los Angeles">Los Angeles</SelectItem>
-                        <SelectItem value="New York">New York</SelectItem>
-                        <SelectItem value="Miami">Miami</SelectItem>
-                        <SelectItem value="San Francisco">San Francisco</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Info text */}
-                <div className="bg-accent/5 border border-accent/20 rounded-lg px-4 py-3 text-sm text-foreground/70">
-                  💡 <strong>Tip:</strong> You can search by location alone without dates, or set dates for precise availability checking.
-                </div>
+            {/* Search Bar - Centered Below */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-6 flex flex-col sm:flex-row items-center gap-3 justify-center">
+              {/* Search Text Field */}
+              <div className="relative w-full sm:flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Search car..."
+                  value={carName}
+                  onChange={(e) => setCarName(e.target.value)}
+                  className="h-11 w-full border border-gray-300 bg-white hover:border-blue-400 focus:border-blue-500 text-gray-900 placeholder-gray-400 rounded-lg transition-colors text-sm pl-9"
+                />
               </div>
-            </Card>
+
+              {/* Pick-up Date Calendar */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-11 sm:w-32 border border-gray-300 bg-white hover:bg-gray-50 hover:border-blue-400 focus:border-blue-500 justify-center sm:justify-start text-left font-normal text-gray-800 rounded-lg transition-colors text-sm px-3 whitespace-nowrap w-full"
+                  >
+                    {startDate ? formatDate(startDate) : 'Pick-up'}
+                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    disabled={(date) =>
+                      date < new Date() || isDateBooked(date)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Drop-off Date Calendar */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-11 sm:w-32 border border-gray-300 bg-white hover:bg-gray-50 hover:border-blue-400 focus:border-blue-500 justify-center sm:justify-start text-left font-normal text-gray-800 rounded-lg transition-colors text-sm px-3 whitespace-nowrap w-full"
+                  >
+                    {endDate ? formatDate(endDate) : 'Drop-off'}
+                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={(date) =>
+                      date < new Date() || 
+                      (startDate && date <= startDate) ||
+                      isDateBooked(date)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Search Button */}
+              <Button
+                className="h-11 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all rounded-lg px-6 w-full sm:w-auto"
+                onClick={handleSearch}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -364,14 +304,14 @@ export function SearchHero() {
           <div className="container">
             {/* Header */}
             <div className="mb-12 space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 border border-accent/20">
+              <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-400/20 to-cyan-400/20 px-4 py-2 border border-blue-400/20">
                 <span className="text-2xl">✨</span>
-                <span className="text-sm font-semibold text-accent">Search Results</span>
+                <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Search Results</span>
               </div>
               
               <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
                 {searchResults.length > 0 ? (
-                  <>Found <span className="text-accent">{searchResults.length}</span> Available Car{searchResults.length !== 1 ? 's' : ''}</>
+                  <>Found <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{searchResults.length}</span> Available Car{searchResults.length !== 1 ? 's' : ''}</>
                 ) : (
                   'No Cars Found'
                 )}
@@ -469,16 +409,16 @@ export function SearchHero() {
                             <span className="text-2xl font-bold text-accent">{pricePerDayStr}</span>
                           </div>
                           {days > 0 && totalPriceStr && (
-                            <div className="flex justify-between items-baseline bg-accent/5 rounded-lg px-3 py-2 border border-accent/20">
+                            <div className="flex justify-between items-baseline bg-gradient-to-r from-blue-400/10 to-cyan-400/10 rounded-lg px-3 py-2 border border-blue-400/20">
                               <span className="text-sm font-medium text-foreground">Total ({days} days):</span>
-                              <span className="text-xl font-bold text-accent">{totalPriceStr}</span>
+                              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{totalPriceStr}</span>
                             </div>
                           )}
                         </div>
 
                         {/* Book Button */}
                         <Button 
-                          className="w-full h-11 bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                          className="w-full h-11 bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg transition-all"
                           size="lg"
                         >
                           Reserve Now
@@ -490,8 +430,8 @@ export function SearchHero() {
               </div>
             ) : (
               <Card className="border-2 border-dashed border-muted-foreground/30 bg-white/50 backdrop-blur p-16 text-center">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
-                  <Search className="h-8 w-8 text-accent" />
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-400/20 to-cyan-400/20">
+                  <Search className="h-8 w-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground">No Cars Available</h3>
                 <p className="mt-3 text-lg text-muted-foreground max-w-sm mx-auto">

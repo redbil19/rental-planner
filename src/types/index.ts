@@ -12,6 +12,7 @@ export interface Car {
   id: string;
   agencyId: string;
   name: string;
+  brand?: string;
   type: string;
   image: string;
   pricePerDay: number;

@@ -17,12 +17,11 @@ export function AgencyCard({ agency }: AgencyCardProps) {
           alt={agency.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="font-display text-xl font-bold text-primary-foreground">
+        <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3">
+          <h3 className="font-display text-lg font-bold text-gray-900">
             {agency.name}
           </h3>
-          <div className="flex items-center gap-1 text-primary-foreground/80">
+          <div className="flex items-center gap-1 text-gray-700">
             <MapPin className="h-4 w-4" />
             <span className="text-sm">{agency.location}</span>
           </div>

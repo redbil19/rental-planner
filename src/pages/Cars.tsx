@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { CarCard } from '@/components/CarCard';
@@ -28,26 +28,84 @@ import { Car } from '@/types';
 const carTypes = ['SUV', 'Sedan', 'Sports', 'Compact', 'Luxury', 'Van'];
 
 export default function Cars() {
+  const [cars, setCars] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState<string>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const maxPrice = Math.max(...mockCars.map(c => c.pricePerDay));
+  // Fetch cars from API
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://10.4.20.141:3000/api/cars');
+        
+        if (!response.ok) {
+          console.error('Failed to fetch cars:', response.status);
+          // Use mock data if API fails
+          setCars(mockCars);
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          // Transform API data to match Car type
+          const transformedCars = data.map(car => ({
+            id: car.car_id,
+            name: `${car.brand} ${car.model}`,
+            brand: car.brand || 'Unknown',
+            type: car.model || 'Sedan',
+            image: car.cover_image || 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400',
+            pricePerDay: parseFloat(car.price_per_day),
+            seats: 5,
+            transmission: car.transmission || 'Automatic',
+            fuelType: car.fuel_type || 'Petrol',
+            available: true,
+            agencyId: car.business_id,
+            agencyName: car.business_name || 'Agency',
+            description: car.description || '',
+          }));
+          setCars(transformedCars);
+        } else {
+          // Use mock data if no cars returned
+          setCars(mockCars);
+        }
+      } catch (err) {
+        console.error('Error fetching cars:', err);
+        // Fallback to mock data on error
+        setCars(mockCars);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCars();
+  }, []);
 
   const filteredCars = useMemo(() => {
-    return mockCars.filter((car) => {
+    return cars.filter((car) => {
       // Search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
           car.name.toLowerCase().includes(query) ||
-          car.type.toLowerCase().includes(query);
+          car.type.toLowerCase().includes(query) ||
+          car.brand?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
+      }
+
+      // Brand filter
+      if (selectedBrand !== 'all' && car.brand !== selectedBrand) {
+        return false;
       }
 
       // Type filter
@@ -72,26 +130,61 @@ export default function Cars() {
 
       return true;
     });
-  }, [searchQuery, selectedType, selectedAgency, priceRange, showAvailableOnly]);
+  }, [cars, searchQuery, selectedBrand, selectedType, selectedAgency, priceRange, showAvailableOnly]);
 
   const handleBook = (car: Car) => {
     setSelectedCar(car);
     setBookingOpen(true);
   };
 
+  const maxPrice = cars.length > 0 ? Math.max(...cars.map(c => c.pricePerDay)) : 500;
+
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedType('all');
+    setSelectedBrand('all');
     setSelectedAgency('all');
     setPriceRange([0, maxPrice]);
     setShowAvailableOnly(false);
   };
 
-  const hasActiveFilters = searchQuery || selectedType !== 'all' || selectedAgency !== 'all' || 
+  const hasActiveFilters = searchQuery || selectedType !== 'all' || selectedBrand !== 'all' || selectedAgency !== 'all' || 
     priceRange[0] > 0 || priceRange[1] < maxPrice || showAvailableOnly;
+
+  // Get unique brands from cars
+  const uniqueBrands = useMemo(() => {
+    const brands = cars
+      .map(car => car.brand)
+      .filter(Boolean)
+      .filter((brand, index, self) => self.indexOf(brand) === index)
+      .sort();
+    
+    // Add sample brands if none found (for development/testing)
+    if (brands.length === 0) {
+      return ['Mercedes', 'BMW', 'Audi', 'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Tesla', 'Porsche', 'Jeep'];
+    }
+    
+    return brands;
+  }, [cars]);
 
   const FilterContent = () => (
     <div className="space-y-6">
+      {/* Car Brand */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Brand</Label>
+        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="All Brands" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover">
+            <SelectItem value="all">All Brands</SelectItem>
+            {uniqueBrands.map((brand) => (
+              <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Car Type */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Car Type</Label>
@@ -179,7 +272,7 @@ export default function Cars() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by car name or type..."
+              placeholder="Search by brand, name, or type..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -188,6 +281,18 @@ export default function Cars() {
 
           {/* Desktop Filters */}
           <div className="hidden lg:flex items-center gap-3">
+            <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+              <SelectTrigger className="w-[140px] bg-background">
+                <SelectValue placeholder="Brand" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">All Brands</SelectItem>
+                {uniqueBrands.map((brand) => (
+                  <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-[140px] bg-background">
                 <SelectValue placeholder="Car Type" />

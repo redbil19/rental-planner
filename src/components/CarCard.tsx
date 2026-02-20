@@ -50,7 +50,7 @@ export function CarCard({ car, onBook }: CarCardProps) {
 
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-2xl font-bold text-accent">${car.pricePerDay}</span>
+            <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">${car.pricePerDay}</span>
             <span className="text-sm text-muted-foreground">/day</span>
           </div>
           <Button

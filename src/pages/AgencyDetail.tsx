@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, Star, Car as CarIcon, ArrowLeft } from 'lucide-react';
 import { Car } from '@/types';
@@ -12,9 +12,100 @@ export default function AgencyDetail() {
   const { id } = useParams<{ id: string }>();
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [agency, setAgency] = useState<any>(null);
+  const [cars, setCars] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const agency = mockAgencies.find((a) => a.id === id);
-  const cars = mockCars.filter((c) => c.agencyId === id);
+  useEffect(() => {
+    const fetchAgencyAndCars = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all businesses to find the one matching the ID
+        const businessResponse = await fetch('http://10.4.20.141:3000/api/businesses');
+        
+        if (businessResponse.ok) {
+          const businesses = await businessResponse.json();
+          const foundBusiness = businesses.find((b: any) => b.business_id === parseInt(id || '0'));
+          
+          if (foundBusiness) {
+            setAgency({
+              id: foundBusiness.business_id,
+              name: foundBusiness.business_name,
+              image: foundBusiness.cover_image || 'https://images.unsplash.com/photo-1549399542-7e3f8b83ad8e?w=600',
+              rating: foundBusiness.rating || 4.5,
+              reviewCount: foundBusiness.review_count || 0,
+              location: foundBusiness.location || 'City Location',
+              description: foundBusiness.description || 'Premium car rental service',
+              totalCars: foundBusiness.car_count || 0,
+            });
+          } else {
+            // Fallback to mock data
+            const mockAgency = mockAgencies.find((a) => a.id === id);
+            setAgency(mockAgency || null);
+          }
+        } else {
+          // Fallback to mock data
+          const mockAgency = mockAgencies.find((a) => a.id === id);
+          setAgency(mockAgency || null);
+        }
+
+        // Fetch cars for this business
+        const carsResponse = await fetch('http://10.4.20.141:3000/api/cars');
+        
+        if (carsResponse.ok) {
+          const allCars = await carsResponse.json();
+          
+          // Filter cars by business_id
+          const filteredCars = allCars
+            .filter((car: any) => car.business_id === parseInt(id || '0'))
+            .map((car: any) => ({
+              id: car.car_id,
+              name: `${car.brand} ${car.model}`,
+              brand: car.brand || 'Unknown',
+              type: car.model || 'Sedan',
+              image: car.cover_image || 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400',
+              pricePerDay: parseFloat(car.price_per_day),
+              seats: 5,
+              transmission: car.transmission || 'Automatic',
+              fuelType: car.fuel_type || 'Petrol',
+              available: true,
+              agencyId: car.business_id,
+              agencyName: car.business_name || 'Agency',
+              description: car.description || '',
+            }));
+          
+          setCars(filteredCars);
+        } else {
+          // Fallback to mock data
+          const mockCarsData = mockCars.filter((c) => c.agencyId === id);
+          setCars(mockCarsData);
+        }
+      } catch (err) {
+        console.error('Error fetching agency details:', err);
+        // Fallback to mock data
+        const mockAgency = mockAgencies.find((a) => a.id === id);
+        setAgency(mockAgency || null);
+        const mockCarsData = mockCars.filter((c) => c.agencyId === id);
+        setCars(mockCarsData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgencyAndCars();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-24 text-center">
+          <p className="text-lg text-muted-foreground">Loading agency details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!agency) {
     return (

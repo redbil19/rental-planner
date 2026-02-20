@@ -7,11 +7,16 @@ import Index from "./pages/Index";
 import Agencies from "./pages/Agencies";
 import AgencyDetail from "./pages/AgencyDetail";
 import Cars from "./pages/Cars";
-import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import AgencyAdminDashboard from "./pages/AgencyAdminDashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import HowItWorks from "./pages/HowItWorks";
 import FAQ from "./pages/FAQ";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +32,12 @@ const App = () => (
           <Route path="/cars" element={<Cars />} />
           <Route path="/agencies" element={<Agencies />} />
           <Route path="/agency/:id" element={<AgencyDetail />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/signin" element={<Login />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/superadmin" element={<SuperAdminDashboard />} />
+          <Route path="/admin/agency" element={<AgencyAdminDashboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
